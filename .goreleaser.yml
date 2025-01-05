@@ -1,0 +1,34 @@
+project_name: tmux-sessionizr
+
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goarch:
+      - "386"
+      - "amd64"
+      - "arm"
+      - "arm64"
+    goos:
+      - linux
+      - darwin
+    goarm: ["5", "6", "7"]
+    ignore:
+      - goos: darwin
+        goarch: arm
+    main: ./cmd/tmux-sessionizr
+
+archives:
+  - name_template: >-
+      {{ .ProjectName }}_
+      {{- .Version }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- with .Arm }}v{{ . }}{{ end }}
+
+checksum:
+  name_template: 'checksums.txt'
+
+snapshot:
+  name_template: "{{ incminor .Tag }}-dev"
