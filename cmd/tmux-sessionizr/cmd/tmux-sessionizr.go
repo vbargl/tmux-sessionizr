@@ -11,6 +11,7 @@ import (
 
 var rootCmd = cobra.Command{
 	Use: "tmux-sessionizr",
+	
 }
 
 func Execute() {
