@@ -1,6 +1,7 @@
 #!/bin/env bash
 
-BIN=./bin/tmux-sessionizr
+BIN_PATH=./bin/tmux-sessionizr
+ARCHIVE_PATH=./bin/tmux-sessionizr.tar.gz
 
 # Define GitHub repository and API endpoint for downloading the binary
 REPO="vbargl/tmux-sessionizr"
@@ -8,21 +9,24 @@ API_URL="https://api.github.com/repos/$REPO/releases/tags"
 
 function install_sessionizr {
   # Check if tmux-sessionizr is available in the PATH
+  BIN="$(tmux show -gv @sessionizr-bin 2>/dev/null)"
   if command -v tmux-sessionizr >/dev/null 2>&1; then
     BIN=$(command -v tmux-sessionizr)
   fi
+
+  # Get the latest release tag relative to current commit
+  GIT_TAG=$(git describe --tags --abbrev=0)
 
   # Check if tmux-sessionizr is installed and up-to-date
   if [ -f "$BIN" ]; then
     INSTALLED_VERSION=$("$BIN" version)
     if [ "$INSTALLED_VERSION" == "dev" ]; then
-      set -g @sessionizr-bin "$BIN"
+      tmux set -g @sessionizr-bin "$BIN"
       exit 0
     fi
 
-    GIT_TAG=$(git describe --tags --abbrev=0)
     if [ "$INSTALLED_VERSION" == "$GIT_TAG" ]; then
-      set -g @sessionizr-bin "$BIN"
+      tmux set -g @sessionizr-bin "$BIN"
       exit 0
     else
       echo "Updating tmux-sessionizr from $INSTALLED_VERSION to $GIT_TAG"
@@ -33,7 +37,7 @@ function install_sessionizr {
 
   # Get the release information
   RELEASE_INFO=$(curl -s "$API_URL/$GIT_TAG")
-  
+
   # Get the OS and architecture
   OS=$(uname -s)
   ARCH=$(uname -m)
@@ -47,12 +51,12 @@ function install_sessionizr {
 
   # Download the binary
   echo "Downloading tmux-sessionizr from $DOWNLOAD_URL"
-  curl -L "$DOWNLOAD_URL" -o ./bin/tmux-sessionizr.tar.gz
-  tar -xzf ./bin/tmux-sessionizr.tar.gz -C ./bin
-  rm ./bin/tmux-sessionizr.tar.gz
-  chmod +x "$BIN"
+  curl -L "$DOWNLOAD_URL" -o "$ARCHIVE_PATH"
+  tar -xzf "$ARCHIVE_PATH" -C ./bin
+  rm "$ARCHIVE_PATH"
+  chmod +x "$BIN_PATH"
 
-  set-option -g @sessionizr-bin "$BIN"
+  tmux set-option -g @sessionizr-bin "$BIN_PATH"
 }
 
 install_sessionizr
