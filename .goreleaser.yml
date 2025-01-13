@@ -16,6 +16,8 @@ builds:
       - goos: darwin
         goarch: arm
     main: ./cmd/tmux-sessionizr
+    ldflags:
+    - -X 'barglvojtech.net/tmux-sessionizr/cmd/tmux-sessionizr/cmd.Version={{.Version}}'
 
 archives:
   - name_template: >-
