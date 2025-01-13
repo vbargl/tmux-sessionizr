@@ -133,23 +133,28 @@ func load(r io.Reader) (sess []Session, err error) {
 
 		switch {
 		case strings.TrimSpace(line) == "": // empty line
-		case strings.HasPrefix(line, "#"): // comment
-		case strings.HasPrefix(line, "[") && strings.HasSuffix(line, "]"): // [sessionName]
-			parts := strings.Split(strings.Trim(line, "[]"), ":")
-			if len(parts) != 2 {
-				return nil, errors.New("invalid session name, expected format: [sessionName:workingDirectory]")
-			}
 
-			name, wd := parts[0], os.ExpandEnv(parts[1])
-			sess = append(sess, Session{Name: name, WorkingDirectory: wd})
+		case strings.HasPrefix(line, "#"): // comment
+
+		case strings.HasPrefix(line, "[") && strings.HasSuffix(line, "]"): // [sessionName]
+			name := strings.Trim(line, "[]")
+			sess = append(sess, Session{Name: name, Options: make(map[string]string)})
 			activeSession = &sess[len(sess)-1]
+
+		case strings.HasPrefix(line, ":"): // options
+			if activeSession == nil {
+				return nil, errors.New("no session name found")
+			}
+			keyvalue := strings.SplitN(line[1:], "=", 2)
+			activeSession.Options[normalizeOptionKey(keyvalue[0])] = keyvalue[1]
+
 		case strings.HasSuffix(line, "\\"): // multi-line command
 			activeCommand += strings.TrimSuffix(line, "\\")
+
 		default: // single-line command
 			if activeSession == nil {
 				return nil, errors.New("no session name found")
 			}
-
 			cmd, err := shellwords.Parse(line)
 			if err != nil {
 				return nil, err
@@ -159,10 +164,4 @@ func load(r io.Reader) (sess []Session, err error) {
 	}
 
 	return sess, nil
-}
-
-type Session struct {
-	Name             string
-	WorkingDirectory string
-	Commands         [][]string
 }

@@ -1,0 +1,3 @@
+[x] use config as template and create session on demand 
+  [x] some way to provide list of available sessions
+[ ] auto install script
